@@ -1,0 +1,69 @@
+# Two services on one network: the Spark pipeline and the PostgreSQL it writes to.
+# The event generator is not a third service -- it is a script run inside `spark`
+# via `make generate`, because it has no dependency worth its own image.
+
+services:
+
+  postgres:
+    # Pinned to 16-alpine deliberately, not the newest major. Verified directly:
+    # postgres:18's image moved PGDATA to /var/lib/postgresql/18/docker, so the
+    # near-universal `pgdata:/var/lib/postgresql/data` mount below would silently
+    # bind a volume onto an unused empty directory and lose the database on every
+    # container recreate. 16-alpine keeps the classic path, is supported to Nov
+    # 2028, and every feature this project uses (ON CONFLICT, percentile_cont,
+    # TIMESTAMPTZ) long predates it.
+    # If you ever move to 18+, mount /var/lib/postgresql instead.
+    image: postgres:16-alpine
+    container_name: rtdi-postgres
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # The official image runs every .sql in this directory ONCE, on first
+      # initialisation of an empty data dir. Mounting sql/ here makes the
+      # postgres_setup.sql deliverable double as the bootstrap -- no "remember
+      # to run the setup script" step in the user guide.
+      #
+      # Mounted as a DIRECTORY, not a single file, on purpose: bind-mounting a
+      # path that doesn't exist yet makes Docker create it as a root-owned
+      # *directory*, which then silently never runs. sql/ exists from Phase 0,
+      # so this works before postgres_setup.sql is written (Phase 3).
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    healthcheck:
+      # depends_on alone waits only for the container to START. Postgres takes
+      # a few more seconds to accept connections, and Spark would connect into
+      # that gap and crash. This is what makes `condition: service_healthy` below
+      # mean something. ($$ escapes to a literal $ so the container's shell,
+      # not Compose, expands it.)
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  spark:
+    build: .
+    container_name: rtdi-spark
+    env_file: .env
+    working_dir: /home/jovyan/work
+    volumes:
+      - .:/home/jovyan/work
+      # Checkpoints go in a NAMED VOLUME, not the bind mount above. Structured
+      # Streaming's checkpointing depends on atomic-rename semantics that Windows
+      # bind mounts do not reliably honour; the failure mode is rare, silent
+      # corruption. A named volume is a real Linux filesystem inside the VM.
+      # Inspect it with `make shell` when you need to.
+      - checkpoints:/opt/checkpoints
+    ports:
+      - "8888:8888"   # JupyterLab (token printed by `make logs`)
+      - "4040:4040"   # Spark UI -- the streaming query's live progress page
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  checkpoints:
