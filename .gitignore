@@ -6,6 +6,18 @@ __pycache__/
 # C extensions
 *.so
 docs/
+
+# Generated data (event CSVs, archived files) and logs -- keep the folder
+# structure itself (.gitkeep) so the tree exists on a fresh clone.
+data/staging/*
+data/incoming/*
+data/archive/*
+!data/staging/.gitkeep
+!data/incoming/.gitkeep
+!data/archive/.gitkeep
+
+logs/*
+!logs/.gitkeep
 # Distribution / packaging
 .Python
 build/
