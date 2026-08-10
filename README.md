@@ -104,7 +104,6 @@ Beyond the brief:
 | Extra | Lives at |
 |---|---|
 | Decision records ; the contested calls, with what was found while building | [`reports/decisions/`](reports/decisions/) |
-| Micro-batch sequence diagram ; why the pipeline survives a crash | [`reports/micro_batch_sequence.png`](reports/micro_batch_sequence.png) |
 | Automated test suite ; 86 tests | [`tests/`](tests/) |
 | Windowed aggregate (`event_metrics`) ; the stretch goal | [`src/transforms.py`](src/transforms.py), [`src/sinks.py`](src/sinks.py) |
 
