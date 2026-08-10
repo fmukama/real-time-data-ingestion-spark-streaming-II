@@ -1,5 +1,6 @@
-# Two services on one network: the Spark pipeline and the PostgreSQL it writes to.
-# The event generator is not a third service -- it is a script run inside `spark`
+# Three services on one network: the Spark pipeline, the PostgreSQL it writes to,
+# and Adminer (a browser UI for that database).
+# The event generator is not a fourth service -- it is a script run inside `spark`
 # via `make generate`, because it has no dependency worth its own image.
 
 services:
@@ -59,6 +60,52 @@ services:
     ports:
       - "8888:8888"   # JupyterLab (token printed by `make logs`)
       - "4040:4040"   # Spark UI -- the streaming query's live progress page
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Adminer: a browser-based SQL client for reading the three tables without
+  # needing psql, or a desktop client installed on Windows. Reach it with
+  # `make adminer`, which prints a URL with the login form already filled in.
+  #
+  # It holds no state of its own (it is a single PHP application that opens a
+  # connection per request), so it needs no volume and is always safe to drop,
+  # recreate, or leave out entirely -- nothing in the pipeline depends on it.
+  adminer:
+    # Pinned like every other image here, and checked against the registry
+    # rather than assumed: 5.5.1 is current.
+    #
+    # The `-standalone` suffix is load-bearing, not decoration. That variant
+    # runs PHP's own built-in web server and therefore serves HTTP directly.
+    # The other published variant, `-fastcgi`, speaks only FastCGI and expects
+    # an nginx or apache in front of it -- used here it would start cleanly,
+    # pass no healthcheck, and serve nothing at all on port 8080.
+    image: adminer:5.5.1-standalone
+    container_name: rtdi-adminer
+    environment:
+      # Prefills the login form's "Server" field. This is the one field people
+      # get wrong, and for the same reason the README calls out: inside this
+      # container `localhost` is Adminer itself, not the database -- the
+      # database is `postgres`, the compose service name.
+      #
+      # Verified directly against 5.5.1 that this variable IS honoured.
+      #
+      # There is deliberately NO ADMINER_DEFAULT_DRIVER here, even though it
+      # is the obvious companion setting and is widely posted as the way to
+      # preselect PostgreSQL. Verified directly against 5.5.1: the image
+      # ignores it silently -- the "System" dropdown still comes up on
+      # MySQL/MariaDB. Setting it would look like it worked and quietly do
+      # nothing. The driver is preselected by URL parameter instead
+      # (`?pgsql=...`), which was verified to work; see the `adminer` target
+      # in the Makefile.
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "${ADMINER_HOST_PORT:-8080}:8080"
+    # Not a hard requirement -- Adminer only connects when you submit the login
+    # form, so it would work fine starting before the database. Gating it on the
+    # healthcheck anyway means `make up` never hands you a login page that is
+    # guaranteed to fail for the few seconds Postgres is still starting.
     depends_on:
       postgres:
         condition: service_healthy

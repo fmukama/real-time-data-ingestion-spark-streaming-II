@@ -11,7 +11,7 @@ never need to type a `docker` command directly.
 | **Docker Desktop** | Must be **running** before any command below. On Windows, ensure the WSL2 backend is enabled |
 | **`make`** | Via Git Bash, WSL, or `choco install make`. If you have none of these, every target's underlying command is listed in the [README](../README.md#make-targets) |
 | **~4 GB free RAM** | Spark's JVM plus PostgreSQL |
-| **Ports 5432, 8888, 4040 free** | If a native PostgreSQL already owns 5432, change `POSTGRES_HOST_PORT` in `.env` (step 2) |
+| **Ports 5432, 8888, 4040, 8080 free** | If a native PostgreSQL already owns 5432, change `POSTGRES_HOST_PORT` in `.env` (step 2). 8080 is Adminer ; change `ADMINER_HOST_PORT` if something else owns it |
 
 Nothing else. No local Python, no local Spark, no local PostgreSQL ; everything runs in containers.
 
@@ -43,7 +43,7 @@ time** and is cached afterwards:
 make build
 ```
 
-Start both containers:
+Start all three containers:
 
 ```bash
 make up
@@ -56,13 +56,13 @@ window where the database is up but not yet accepting connections.
 init directory, which runs every `.sql` file there once, when the data directory is first initialised. There is
 no separate "run the setup script" step.
 
-Confirm both containers are healthy:
+Confirm the containers are healthy:
 
 ```bash
 docker compose ps
 ```
 
-You should see `postgres` and `spark`, both `running`.
+You should see `postgres`, `spark` and `adminer`, all `running`.
 
 
 ## 3. Run the pipeline
@@ -148,6 +148,38 @@ Or open a SQL prompt and look yourself:
 ```bash
 make psql
 ```
+
+### Prefer a browser? `make adminer`
+
+```bash
+make adminer
+```
+
+Adminer is a browser-based SQL client for the same database ; click through tables, sort and filter columns, and
+run ad hoc SQL without a terminal or a desktop client installed. The target starts the container if it isn't
+already up, then prints a link:
+
+```
+http://localhost:8080/?pgsql=postgres&username=streaming&db=ecommerce
+```
+
+Those URL parameters do real work: they preselect **PostgreSQL** in the *System* dropdown and fill in the server,
+username and database. **You type only the password** ; the `POSTGRES_PASSWORD` value from your `.env`. Adminer
+deliberately never accepts a password from a URL or an environment variable, which is the right call: a URL
+lands in shell history, terminal scrollback and the browser address bar.
+
+If you navigate to `http://localhost:8080` directly instead of using the printed link, two fields need attention:
+
+| Field | Value | Why |
+|---|---|---|
+| **System** | `PostgreSQL` | Defaults to MySQL/MariaDB, and cannot be changed by configuration ; only the URL parameter preselects it |
+| **Server** | `postgres` | **Not** `localhost` ; inside Docker, `localhost` is the Adminer container itself. Prefilled for you either way |
+| **Username** / **Database** | `streaming` / `ecommerce` | Whatever `POSTGRES_USER` / `POSTGRES_DB` are set to in `.env` |
+
+Once in, the three tables are `events`, `events_quarantine` and `event_metrics`.
+
+> Adminer is a convenience, not part of the pipeline. It stores nothing, and nothing depends on it ; stopping or
+> removing the container has no effect on ingestion.
 
 ```sql
 SELECT count(*) FROM events;
@@ -247,6 +279,8 @@ The manual test plan, with real recorded results, is in [`test_cases.md`](test_c
 |---|---|---|
 | `Cannot connect to the Docker daemon` | Docker Desktop isn't running | Start Docker Desktop, wait for it to report Running |
 | `port is already allocated` on 5432 | A native PostgreSQL owns the port | Change `POSTGRES_HOST_PORT` in `.env`, then `make down && make up` |
+| `port is already allocated` on 8080 | Something else owns 8080 (it is a popular default) | Change `ADMINER_HOST_PORT` in `.env`, then `make down && make up` |
+| Adminer says the connection failed | *System* left on MySQL/MariaDB, or *Server* set to `localhost` | Use the link `make adminer` prints ; it sets both correctly |
 | Streaming job fails immediately with a checkpoint/plan error | Stale checkpoint from an earlier query shape | `make reset` |
 | Schema changes to `postgres_setup.sql` have no effect | Init script only runs on an empty data directory | `make reset` |
 | `make stream` prints nothing | No data yet, or the generator isn't running | Start `make generate` in a second terminal |

@@ -21,8 +21,16 @@ make build && make up
 make help
 ```
 
-`make up` starts both containers and waits for PostgreSQL's healthcheck before starting Spark ; so Spark never
-connects into the window where the database is up but not yet accepting connections.
+`make up` starts all three containers and waits for PostgreSQL's healthcheck before starting Spark ; so Spark
+never connects into the window where the database is up but not yet accepting connections.
+
+To browse the database in a browser rather than `psql`:
+
+```bash
+make adminer
+```
+
+That prints a URL with the login form already filled in ; you type only the password.
 
 ## Verified environment
 
@@ -35,6 +43,7 @@ Every version below was checked against its registry before pinning, not assumed
 | Java / Python | 21 / 3.13.14 | bundled |
 | PostgreSQL | `postgres:16-alpine` | see note below |
 | JDBC driver | `postgresql-42.7.13.jar` | baked into the image at build time |
+| Adminer | `adminer:5.5.1-standalone` | `-standalone` serves HTTP itself; `-fastcgi` needs nginx in front |
 
 > **Why PostgreSQL 16 and not 18:** verified directly ; the `postgres:18` image moved `PGDATA` to
 > `/var/lib/postgresql/18/docker`. The near-universal `pgdata:/var/lib/postgresql/data` volume mount therefore
@@ -48,11 +57,12 @@ Every version below was checked against its registry before pinning, not assumed
 | Target | Does |
 |---|---|
 | `make build` | build the spark image (base + JDBC driver + requirements) |
-| `make up` | start postgres + spark, waiting for postgres to be healthy |
-| `make down` | stop both containers, keep volumes |
+| `make up` | start postgres + spark + adminer, waiting for postgres to be healthy |
+| `make down` | stop all three containers, keep volumes |
 | `make logs` | follow container logs (the JupyterLab token appears here) |
 | `make shell` | bash inside the spark container |
 | `make psql` | psql inside the postgres container |
+| `make adminer` | browse the database in a browser ; prints a prefilled login URL |
 | `make generate` | run the event generator ; `ARGS="--rate 1000 --duration 300"` |
 | `make stream` | run the streaming job |
 | `make metrics` | run `sql/verification_queries.sql` and print results |
@@ -74,6 +84,7 @@ Every version below was checked against its registry before pinning, not assumed
 |---|---|---|
 | 8888 | JupyterLab | `http://localhost:8888/lab` ; token from `make logs` |
 | 4040 | Spark UI | `http://localhost:4040` ; the streaming query's live progress page |
+| 8080 | Adminer | `http://localhost:8080` ; use `make adminer` for a prefilled link |
 | 5432 | PostgreSQL | `localhost:5432` |
 
 > **The hostname that trips everyone up:** inside the Docker network the database host is `postgres` (the compose

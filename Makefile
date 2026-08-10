@@ -1,11 +1,12 @@
 SPARK := spark
 PG    := postgres
+ADM   := adminer
 
 # ARGS lets you pass flags through without editing the Makefile, e.g.
 #   make generate ARGS="--rate 1000 --duration 300"
 ARGS ?=
 
-.PHONY: help build up down logs shell psql generate stream metrics test verify clean reset
+.PHONY: help build up down logs shell psql adminer generate stream metrics test verify clean reset
 
 help:
 	@echo "Environment"
@@ -15,6 +16,7 @@ help:
 	@echo "  make logs      - follow container logs (the JupyterLab token appears here)"
 	@echo "  make shell     - bash inside the spark container"
 	@echo "  make psql      - psql inside the postgres container"
+	@echo "  make adminer   - browse the database in a browser (prints a prefilled URL)"
 	@echo ""
 	@echo "Pipeline"
 	@echo "  make generate  - run the event generator      ARGS=\"--rate 100 ...\""
@@ -48,6 +50,38 @@ shell:
 
 psql:
 	docker compose exec $(PG) sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB'
+
+# Same database as `make psql`, in a browser instead of a terminal. Starts the
+# container if it isn't already up, so this works standalone without `make up`.
+#
+# The URL carries `?pgsql=postgres&username=...&db=...`, which preselects
+# PostgreSQL in the "System" dropdown and fills in server, username and
+# database. Only the password is left to type -- Adminer never prefills a
+# password from the URL or the environment, by design, and that is the right
+# call: a URL ends up in shell history, the terminal scrollback and the
+# browser's address bar.
+#
+# The three values are read from .env rather than hardcoded, so this target
+# cannot drift from the credentials the containers actually use.
+#
+# Read with grep+cut, deliberately NOT by sourcing .env. `. ./.env` looks
+# tidier and breaks immediately on this project's own file: TRIGGER_INTERVAL is
+# `10 seconds`, unquoted, so a shell sourcing it would try to run `seconds` as
+# a command. tr -d '\r' guards the other direction -- .env is LF today, but
+# editing it in Notepad would append CR to every value and silently corrupt
+# the URL rather than fail.
+adminer:
+	docker compose up -d $(ADM)
+	@port=$$(grep -E '^ADMINER_HOST_PORT=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r'); \
+	 user=$$(grep -E '^POSTGRES_USER=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r'); \
+	 db=$$(grep -E '^POSTGRES_DB=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r'); \
+	 echo ""; \
+	 echo ">>> Adminer is up. Open this (server/username/database prefilled, PostgreSQL preselected):"; \
+	 echo ""; \
+	 echo "      http://localhost:$${port:-8080}/?pgsql=postgres&username=$${user:-streaming}&db=$${db:-ecommerce}"; \
+	 echo ""; \
+	 echo ">>> Password: the POSTGRES_PASSWORD value in your .env (not printed here)."; \
+	 echo ">>> Server is 'postgres', not 'localhost' -- inside Docker, localhost is Adminer itself."
 
 # --- Pipeline ---
 
