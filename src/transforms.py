@@ -113,8 +113,7 @@ def derive(df: DataFrame) -> DataFrame:
 
 def add_rejection_reason(df: DataFrame) -> DataFrame:
     """One rejection_reason column, one condition per row, first match wins --
-    the quarantine pattern from understand.md Phase 6, one pass, no duplicated
-    rule logic.
+    one pass, no duplicated rule logic.
 
     Order matters: a structurally corrupt line is checked first, since once a
     line's own shape is broken, whatever a downstream field looks like is a

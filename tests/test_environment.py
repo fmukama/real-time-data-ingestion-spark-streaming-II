@@ -18,7 +18,7 @@ import pytest
 
 def test_src_package_is_importable():
     """The bug this file exists for. If pytest.ini's pythonpath is lost or the
-    Makefile invocation changes, this fails immediately instead of at Phase 10."""
+    Makefile invocation changes, this fails immediately instead of much later."""
     from src import config, logger, spark_session  # noqa: F401
 
 
@@ -44,7 +44,7 @@ def test_jdbc_driver_jar_is_present():
 
 
 def test_data_directories_exist_and_are_writable():
-    """staging -> incoming is the atomic-publish path (understand.md Phase 4);
+    """staging -> incoming is the atomic-publish path;
     both must exist and be writable before the generator can work."""
     from src import config
 

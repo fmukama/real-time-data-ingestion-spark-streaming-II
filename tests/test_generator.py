@@ -138,10 +138,10 @@ def test_generate_batch_is_deterministic_under_a_seed():
 
 
 def _looks_malformed(event: dict) -> bool:
-    """Mirrors the exact defects Phase 4 injects (and Phase 3's CHECK
+    """Mirrors the exact defects the generator injects (and the events table's CHECK
     constraints reject), rather than reaching into generator internals --
-    a black-box definition of "bad" that also cross-checks Phase 3's DDL
-    actually matches what Phase 4 actually produces.
+    a black-box definition of "bad" that also cross-checks the DDL
+    actually matches what the generator actually produces.
     """
     if event["product_id"] == "":
         return True

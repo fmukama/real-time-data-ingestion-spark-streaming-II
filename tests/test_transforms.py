@@ -3,7 +3,7 @@
 Every transform is DataFrame -> DataFrame with no I/O, so every test here
 builds a small in-memory batch DataFrame directly -- no streaming, no
 Docker-Postgres, all green in well under a second per test. That is the
-entire payoff of Phase 6's pure-function design.
+entire payoff of the transform pipeline's pure-function design.
 """
 
 import random
@@ -56,7 +56,7 @@ def _events_df(spark, rows):
     downstream code -- cast_types is what turns it into real types.
 
     Converts "" to None for every field, matching the real CSV reader's
-    default nullValue="" (confirmed directly in Phase 5/6): make_malformed_event
+    default nullValue="" (confirmed directly): make_malformed_event
     writes "" for its null_product_id defect, and going straight from a Python
     tuple to a DataFrame -- unlike a real run, which always round-trips through
     an actual CSV file -- would otherwise skip that conversion and leave an
@@ -69,7 +69,7 @@ def _events_df(spark, rows):
 
 
 def _process(df):
-    """The pipeline in its documented order (understand.md Phase 6): cast,
+    """The pipeline in its documented order: cast,
     normalise, derive, then add the rejection reason."""
     df = cast_types(df)
     df = normalise(df)
@@ -182,7 +182,7 @@ def test_all_valid_batch_yields_zero_rejects(spark):
     ],
 )
 def test_each_generator_defect_yields_its_expected_rejection_reason(spark, defect, expected_reason):
-    """Closes the loop between Phase 4's defects and Phase 6's rules: fails if
+    """Closes the loop between the generator's defects and the transform rules: fails if
     the generator's defect names and these rules ever drift apart in meaning,
     not just in name."""
     bad = make_malformed_event(_one_event(), defect)
@@ -282,7 +282,7 @@ def test_finalize_quarantine_captures_raw_line_for_a_corrupt_record(spark):
 
 def test_end_to_end_pipeline_on_a_realistic_mixed_batch(spark):
     """Uses the real generator's generate_batch, not hand-built fixtures, so
-    this fails if Phase 4's defects and Phase 6's rules ever drift apart."""
+    this fails if the generator's defects and the transform rules ever drift apart."""
     fake, rng = Faker(), random.Random(77)
     fake.seed_instance(77)
     events = generate_batch(fake, rng, batch_size=200, bad_rate=0.25, now=_FROZEN_NOW)
@@ -301,7 +301,7 @@ def test_end_to_end_pipeline_on_a_realistic_mixed_batch(spark):
     assert events_out.filter(F.col("quantity") < 1).count() == 0
 
 
-# --- aggregate_by_window (Phase 9, stretch goal) ---
+# --- aggregate_by_window (stretch goal) ---
 #
 # aggregate_by_window takes list[dict], not a DataFrame -- the one deliberate
 # exception to this module's DataFrame -> DataFrame rule (see the function's

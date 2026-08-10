@@ -16,7 +16,7 @@ help:
 	@echo "  make shell     - bash inside the spark container"
 	@echo "  make psql      - psql inside the postgres container"
 	@echo ""
-	@echo "Pipeline                                        (available from Phase 4/5)"
+	@echo "Pipeline"
 	@echo "  make generate  - run the event generator      ARGS=\"--rate 100 ...\""
 	@echo "  make stream    - run the streaming job (events + windowed metrics)"
 	@echo "  make metrics   - run sql/verification_queries.sql and print results"
@@ -72,8 +72,8 @@ verify:
 
 # Keeps the database. Safe to run mid-project.
 #
-# archive/ is NOT a flat *.csv glob like staging/incoming -- confirmed directly
-# while building Phase 5: Spark's cleanSource=archive mirrors each consumed
+# archive/ is NOT a flat *.csv glob like staging/incoming -- confirmed directly:
+# Spark's cleanSource=archive mirrors each consumed
 # file's full absolute source path under archive_dir (e.g.
 # archive/home/jovyan/work/data/incoming/events_....csv), not a flat copy. A
 # flat glob here silently left that nested tree behind on every real run.

@@ -5,7 +5,7 @@ Two log files exist in this project and they are deliberately separate:
 
     logs/pipeline.log   - the human narrative, written here
     logs/metrics.jsonl  - machine-parseable per-batch numbers, written by
-                          src/monitoring.py (Phase 8)
+                          src/monitoring.py
 
 Mixing them makes both worse: you cannot `jq` a file full of prose, and you
 cannot read a file full of JSON. Keep the split.

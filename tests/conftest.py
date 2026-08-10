@@ -47,7 +47,7 @@ def clean_tables(pg_conn):
     also swept up -- the same "disposable, always safe to drop" property
     write_events_batch/write_metrics_batch themselves rely on.
 
-    event_metrics was added in Phase 9, after this fixture already existed --
+    event_metrics was added after this fixture already existed --
     caught directly, the hard way, by a real test failure: without it here,
     a row test_write_metrics_batch_upserts_replacing_not_duplicating wrote
     leaked straight into test_write_metrics_batch_with_zero_rows_is_a_no_op,

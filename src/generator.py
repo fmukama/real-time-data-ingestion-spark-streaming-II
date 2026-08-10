@@ -25,7 +25,7 @@ from src.logger import get_logger
 logger = get_logger("generator")
 
 # Bounded catalogs, not a fresh id per event: a real product/customer base is
-# finite and reused, and repeat ids are what make later aggregation (Phase 9's
+# finite and reused, and repeat ids are what make later aggregation (the
 # per-category totals, any "most active user" style analysis) meaningful
 # instead of every row being a singleton nobody groups on.
 _USER_ID_MAX = 5000
@@ -39,8 +39,8 @@ _EVENT_TYPE_WEIGHTS = OrderedDict([
     ("purchase", 0.10),
 ])
 
-# The four defects understand.md's Phase 4 commits to. Each corrupts exactly
-# one field, so a quarantined row's rejection reason (Phase 6) is unambiguous.
+# The four defects this pipeline commits to. Each corrupts exactly
+# one field, so a quarantined row's rejection reason is unambiguous.
 DEFECT_TYPES = ("null_product_id", "negative_price", "unparseable_event_time", "zero_quantity")
 
 
@@ -68,7 +68,7 @@ def make_event(fake: Faker, *, now: datetime | None = None) -> dict:
     # A few hundred ms to ~2s between "the click happened" and "the batch was
     # flushed" -- small enough to be unremarkable, large enough that event_time
     # is a genuinely earlier instant than generated_at, which is what makes
-    # Phase 9's group-by-event-time (rather than processing time) meaningful.
+    # group-by-event-time (rather than processing time) meaningful.
     event_time = generated_at - timedelta(milliseconds=fake.random_int(min=0, max=2000))
 
     return {

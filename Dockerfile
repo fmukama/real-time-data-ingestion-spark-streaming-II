@@ -38,7 +38,7 @@ ENV PATH=${SPARK_HOME}/bin:${PATH}
 # it fails the day you demo offline. Baking it makes the build deterministic.
 #
 # Note this is the JVM-side driver. `psycopg2` (in requirements.txt) is the
-# Python-side client used for the ON CONFLICT upsert in Phase 7. Two different
+# Python-side client used for the ON CONFLICT upsert. Two different
 # worlds; the project genuinely needs both.
 # ---------------------------------------------------------------------------
 ENV POSTGRES_JDBC_VERSION=42.7.13
@@ -53,7 +53,7 @@ RUN set -eu; \
 
 # Checkpoints live in a named volume, NOT the Windows bind mount -- checkpointing
 # relies on atomic-rename semantics that bind mounts don't reliably honour
-# (understand.md Phase 5). Creating the mountpoint here with the notebook user's
+# Creating the mountpoint here with the notebook user's
 # ownership matters: when Docker first populates a named volume from the image,
 # it carries this directory's ownership across. Without it the volume lands
 # root-owned and Spark can't write its offsets.

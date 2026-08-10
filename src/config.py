@@ -1,5 +1,5 @@
 """Project-wide configuration: filesystem paths, PostgreSQL connection details,
-and the streaming knobs the Phase 8 load matrix varies.
+and the streaming knobs the load matrix varies.
 
 Everything tunable is read from the environment with a sensible default, so the
 performance runs can change trigger interval or batch size via .env without
@@ -18,8 +18,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
-# The three-directory dance that makes file-based streaming safe (understand.md
-# Phase 4). The generator writes a complete file into STAGING_DIR, then
+# The three-directory dance that makes file-based streaming safe. The
+# generator writes a complete file into STAGING_DIR, then
 # os.replace()s it into INCOMING_DIR -- an atomic rename, so Spark never sees a
 # partial file. Spark watches INCOMING_DIR only, and moves consumed files to
 # ARCHIVE_DIR so directory listing stays cheap.
@@ -84,7 +84,7 @@ JDBC_PROPERTIES = {
 
 def pg_connect_kwargs() -> dict:
     """Connection kwargs for psycopg2 (the Python-side client used for the
-    ON CONFLICT upsert in Phase 7 and by the integration tests).
+    ON CONFLICT upsert and by the integration tests).
 
     Separate from JDBC_PROPERTIES on purpose: that one configures Spark's JVM
     driver for the bulk write, this one configures the small transactional
@@ -105,7 +105,7 @@ EVENTS_TABLE = "events"
 QUARANTINE_TABLE = "events_quarantine"
 METRICS_TABLE = "event_metrics"
 
-# --- Streaming knobs (varied by the Phase 8 load matrix) ---
+# --- Streaming knobs (varied by the load matrix) ---
 
 # Bounds how many files one micro-batch consumes. Without it the FIRST batch
 # tries to eat the entire backlog sitting in incoming/, which turns a restart

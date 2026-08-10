@@ -32,7 +32,7 @@ ORDER BY n DESC;
 -- p50 / p95 / max, NEVER a mean: streaming latency distributions have a long
 -- tail (a slow batch, a checkpoint flush, a GC pause), and a mean hides
 -- exactly the thing anyone operating this pipeline would actually care about.
-\echo '=== End-to-end latency in ms: p50 / p95 / max (see understand.md Phase 8 for why never a mean) ==='
+\echo '=== End-to-end latency in ms: p50 / p95 / max (never a mean) ==='
 SELECT
     percentile_cont(0.50) WITHIN GROUP (ORDER BY latency_ms) AS p50_ms,
     percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms) AS p95_ms,
@@ -54,7 +54,7 @@ GROUP BY category
 ORDER BY events DESC
 LIMIT 10;
 
--- Phase 9, stretch goal: the windowed aggregate. Populated automatically as
+-- Stretch goal: the windowed aggregate. Populated automatically as
 -- part of the same streaming query as events/events_quarantine -- no
 -- separate flag or process (see src/streaming.py's process_batch).
 \echo '=== event_metrics: most recent windows ==='
@@ -63,7 +63,7 @@ FROM event_metrics
 ORDER BY window_start DESC, category
 LIMIT 10;
 
--- The Phase 9 DoD check, in SQL: does a window's stored aggregate match what
+-- The definition-of-done check, in SQL: does a window's stored aggregate match what
 -- the raw events table itself says for that same minute? Every window here
 -- is accumulated incrementally, per micro-batch, directly from the rows
 -- write_events_batch actually inserted (see transforms.aggregate_by_window) --

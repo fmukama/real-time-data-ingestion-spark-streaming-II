@@ -18,8 +18,8 @@ def pg_transaction():
     """One psycopg2 transaction, yielding a cursor. Commits on clean exit,
     rolls back on any exception, always closes the connection.
 
-    This exists because of a specific bug, found by reviewing Phase 9's first
-    implementation rather than by it failing in a test -- it only shows up on
+    This exists because of a specific bug, found by reviewing the metrics
+    pipeline's first implementation rather than by it failing in a test -- it only shows up on
     a crash in a narrow window, which is exactly the kind of bug that reaches
     production intact.
 
@@ -60,7 +60,7 @@ def pg_transaction():
 
 def write_events_batch(events_df, batch_id: int, cur) -> list[dict]:
     """Idempotent upsert into `events`, safe to replay after a crash. Returns
-    the rows ACTUALLY, NEWLY inserted this call -- which Phase 9's metrics
+    the rows ACTUALLY, NEWLY inserted this call -- which the metrics
     accumulation depends on directly (see aggregate_by_window's docstring).
 
     Runs on the CALLER's cursor and does not commit: this write and the
@@ -77,7 +77,7 @@ def write_events_batch(events_df, batch_id: int, cur) -> list[dict]:
     A replayed batch (Spark re-executing this exact batch_id after a crash
     that happened after the write but before the checkpoint committed)
     re-writes the same staging rows and inserts nothing new. This only works
-    because event_id comes from the PRODUCER (Phase 4): regenerating it in
+    because event_id comes from the PRODUCER: regenerating it in
     Spark would give replayed rows fresh ids that conflict with nothing,
     duplicating perfectly instead of being caught.
 

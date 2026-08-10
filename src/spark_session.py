@@ -44,7 +44,7 @@ def get_spark_session(app_name: str | None = None) -> SparkSession:
         # source is off by default, and it must stay off. Inference requires
         # Spark to peek at files to guess types, and the guess can differ
         # between micro-batches -- a column that changes type mid-stream.
-        # src/schema.py owns the schema instead (Phase 3).
+        # src/schema.py owns the schema instead.
         .config("spark.sql.streaming.schemaInference", "false")
 
         # Must be set HERE, at build time -- confirmed directly that this is a

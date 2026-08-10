@@ -7,13 +7,13 @@ from pyspark.sql.types import StringType, StructField, StructType
 # Every field is StringType. Deliberate, not an oversight: CSV is text, and this
 # schema's only job is getting the right VALUE into the right COLUMN by
 # position. Casting to real types (decimal, int, timestamp) happens explicitly
-# in transforms.py (Phase 6), where a value that fails to cast is compared
+# in transforms.py, where a value that fails to cast is compared
 # against its pre-cast string and routed to quarantine with a reason -- not
 # silently turned into a NULL the way a strictly-typed reader schema would.
 #
 # `nullable` here is documentation of intent, not an enforced read-time
 # constraint -- Spark's CSV reader does not reject a row for violating it.
-# The real enforcement is transforms.add_rejection_reason (Phase 6), which is
+# The real enforcement is transforms.add_rejection_reason, which is
 # why the required/optional split below matches REQUIRED_FIELDS exactly.
 EVENT_SCHEMA = StructType([
     StructField("event_id", StringType(), nullable=False),
@@ -32,8 +32,8 @@ EVENT_SCHEMA = StructType([
 # whole point.
 CSV_COLUMNS = [f.name for f in EVENT_SCHEMA.fields]
 
-# Shared vocabulary so the generator's synthesis, transforms' validation
-# (Phase 6), and the tests never drift on what a "valid" value looks like.
+# Shared vocabulary so the generator's synthesis, transforms' validation,
+# and the tests never drift on what a "valid" value looks like.
 EVENT_TYPES = ["view", "add_to_cart", "purchase"]
 
 CATEGORIES = [
@@ -42,15 +42,15 @@ CATEGORIES = [
 ]
 
 # Fields whose absence makes a row structurally unusable rather than merely
-# business-rule-invalid -- checked first in transforms.add_rejection_reason
-# (Phase 6), and mirrored by NOT NULL in sql/postgres_setup.sql's events table.
+# business-rule-invalid -- checked first in transforms.add_rejection_reason,
+# and mirrored by NOT NULL in sql/postgres_setup.sql's events table.
 REQUIRED_FIELDS = ["event_id", "event_time", "generated_at", "user_id", "event_type"]
 
 # Populated by Spark's PERMISSIVE parser with a structurally broken CSV line's
-# original text (wrong field count). Confirmed directly (Phase 5): Spark fills
+# original text (wrong field count). Confirmed directly: Spark fills
 # in whatever fields it CAN still read positionally and only nulls the ones it
 # couldn't -- it does not null the whole row -- while this column carries the
-# raw line regardless. transforms.add_rejection_reason (Phase 6) routes a
+# raw line regardless. transforms.add_rejection_reason routes a
 # non-null value here into quarantine ahead of every other check.
 #
 # Lives here, not in streaming.py (which builds the reader schema that uses

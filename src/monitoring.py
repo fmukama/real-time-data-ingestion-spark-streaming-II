@@ -1,7 +1,6 @@
 """Turns Spark's own per-micro-batch progress reports into logs/metrics.jsonl
 -- one JSON line per batch, which is what turns docs/performance_metrics.md
-into analysis of a real, measured dataset instead of prose (understand.md
-Phase 8).
+into analysis of a real, measured dataset instead of prose.
 """
 
 from pyspark.sql import SparkSession

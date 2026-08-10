@@ -26,7 +26,7 @@ from src.transforms import (
 
 logger = get_logger("streaming")
 
-# Derived from EVENT_SCHEMA, not equal to it. EVENT_SCHEMA (Phase 3) is the
+# Derived from EVENT_SCHEMA, not equal to it. EVENT_SCHEMA is the
 # generator/Postgres contract and must stay exactly the 9 real columns --
 # CSV_COLUMNS is generated from it, and the generator never writes this extra
 # column. This reader-only schema appends it purely so Spark has somewhere to
@@ -71,7 +71,7 @@ def build_source(
 
     return (
         spark.readStream
-        # Explicit schema, matched by POSITION not name (Phase 3) -- why
+        # Explicit schema, matched by POSITION not name -- why
         # CSV_COLUMNS/EVENT_SCHEMA staying in lockstep matters this much.
         .schema(_READER_SCHEMA)
         .option("header", "true")
@@ -194,7 +194,7 @@ def start_query(spark: SparkSession, *, trigger_interval: str | None = None) -> 
     via foreachBatch, on a fixed processingTime trigger, checkpointed to the
     named Docker volume (config.EVENTS_CHECKPOINT -- see src/config.py for why
     not the bind-mounted working tree). Also registers the metrics listener
-    (Phase 8) so every real run captures logs/metrics.jsonl automatically,
+    so every real run captures logs/metrics.jsonl automatically,
     without a caller needing to remember a separate step.
     """
     trigger_interval = trigger_interval or config.TRIGGER_INTERVAL

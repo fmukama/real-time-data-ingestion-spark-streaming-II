@@ -1,7 +1,7 @@
 """The flagship test: proves write_events_batch is genuinely
 idempotent under replay, not just "probably fine" by construction. Also
-covers write_quarantine_batch's deliberately weaker guarantee, and (Phase 9,
-the windowed-aggregate stretch goal) write_metrics_batch's accumulating
+covers write_quarantine_batch's deliberately weaker guarantee, and (the
+windowed-aggregate stretch goal) write_metrics_batch's accumulating
 upsert plus the transaction that binds it to the events write.
 
 Needs a live Postgres, so every test here is @pytest.mark.integration --
@@ -64,7 +64,7 @@ def _events_row_count(pg_conn):
 
 
 def test_write_events_batch_is_idempotent_under_replay(spark, pg_conn, clean_tables):
-    """The core guarantee Phase 7 exists for: Spark re-executing the SAME
+    """The core guarantee this idempotent-write design exists for: Spark re-executing the SAME
     batch_id after a crash between the write and the checkpoint commit must
     not duplicate rows. This directly simulates that replay -- identical
     batch_id, identical data, called twice.
@@ -84,7 +84,7 @@ def test_write_events_batch_is_idempotent_under_replay(spark, pg_conn, clean_tab
 
 
 def test_write_events_batch_returns_only_the_rows_it_actually_inserted(spark, pg_conn, clean_tables):
-    """RETURNING's exact semantics, which Phase 9's metrics accumulation is
+    """RETURNING's exact semantics, which the metrics accumulation is
     built entirely on top of: a row skipped by ON CONFLICT DO NOTHING is NOT
     returned. Confirmed here directly rather than assumed, because if it were
     ever otherwise, every replayed batch would silently double-count itself
@@ -178,7 +178,7 @@ def test_write_quarantine_batch_is_not_idempotent_by_design(spark, pg_conn, clea
     assert count == 2, "quarantine intentionally has no dedup -- 2 confirms the tradeoff is real, not just assumed"
 
 
-# --- write_metrics_batch (Phase 9, stretch goal) ---
+# --- write_metrics_batch (stretch goal) ---
 
 _WINDOW = "2026-01-01T00:00:10.000Z"  # every event using this shares one 1-minute window
 
