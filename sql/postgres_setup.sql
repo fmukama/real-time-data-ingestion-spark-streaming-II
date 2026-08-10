@@ -11,6 +11,7 @@
 -- These constraints are a second, independent line of defense (the DB refuses
 -- bad data even if it arrives by some path other than this pipeline, e.g. a
 -- stray manual INSERT) -- not a claim that Spark's own checks are untrusted.
+
 CREATE TABLE events (
     event_id      TEXT PRIMARY KEY,                 -- producer-generated UUID; the ON CONFLICT target in Phase 7
     event_time    TIMESTAMPTZ NOT NULL,              -- when the user action happened
