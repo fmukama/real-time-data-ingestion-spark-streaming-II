@@ -39,5 +39,5 @@ for in `events` + `events_quarantine` -> `make metrics` captured to `logs/verify
 
 Reported as **p50 / p95 / max, never a mean** ; streaming latency has a long tail (a slow batch, a checkpoint
 flush, a backlog), and a mean would hide exactly the thing worth knowing. `latency_ms` itself is
-`ingested_at − generated_at`, a real column on every row in `events` (understand.md Phase 3/6), not a derived or
+`ingested_at − generated_at`, a real column on every row in `events`, not a derived or
 sampled estimate.

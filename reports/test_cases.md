@@ -149,7 +149,7 @@ mid-drain**, restarted it, and waited for full drain.
 batch's transaction **rolled back** rather than committing partially ; the restart re-processed those files
 fresh with `0 skipped`.
 
-> A stronger variant of this test was run during Phase 9 development: a `SIGKILL` timed to land while a batch's
+> A stronger variant of this test was run during development: a `SIGKILL` timed to land while a batch's
 > database transaction was open, at 45,000 events. Result: 70/70 windows matched, 3,277,824.60 revenue exact on
 > both sides.
 
@@ -227,14 +227,14 @@ the files were simply reprocessed.
 
 ## TC-10 ; Windowed aggregate matches raw events
 
-This is the Phase 9 definition of done: does each stored window agree with what the raw `events` table says for
+This is the definition of done: does each stored window agree with what the raw `events` table says for
 that same minute?
 
 | Scale | Windows compared | Mismatched | Revenue check |
 |---|---|---|---|
 | 600 events | 10 | **0** | ; |
 | 22,500 events (after a mid-drain `SIGKILL`) | 50 | **0** | 1,677,927.44 = 1,677,927.44 |
-| 45,000 events (Phase 9 crash test) | 70 | **0** | 3,277,824.60 = 3,277,824.60 |
+| 45,000 events | 70 | **0** | 3,277,824.60 = 3,277,824.60 |
 
 Compared with a `FULL OUTER JOIN` and no `LIMIT`, so a window present on one side and missing on the other would
 also be caught ; not just a disagreement between matched rows.
