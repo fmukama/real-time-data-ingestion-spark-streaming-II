@@ -1,0 +1,34 @@
+PostgreSQL Connection Details
+Real-Time Data Ingestion - Spark Structured Streaming -> PostgreSQL
+
+  Host      postgres    (from inside the Docker network -- what Spark uses)
+            localhost   (from Windows -- psql, DBeaver, pgAdmin)
+  Port      5432
+  Database  ecommerce
+  User      streaming
+  Password  rtdi_local_dev_2026
+
+Two correct hostnames, not alternatives: inside a container, "localhost" is
+that container itself, not the database. Getting this wrong is the most common
+setup failure.
+
+Connection strings:
+
+  jdbc:postgresql://postgres:5432/ecommerce?reWriteBatchedInserts=true
+  postgresql://streaming:rtdi_local_dev_2026@localhost:5432/ecommerce
+
+Quickest ways in: `make psql` (terminal) or `make adminer` (browser, prefilled
+login URL). For a desktop client on Windows, use localhost:5432.
+
+Tables: events, events_quarantine, event_metrics. Created on first boot --
+docker-compose mounts sql/ at /docker-entrypoint-initdb.d, so
+postgres_setup.sql doubles as the bootstrap.
+
+Values come from .env (gitignored; copy .env.example). If you change the
+password, run `make reset` -- Postgres only reads POSTGRES_PASSWORD when the
+data directory is empty, so editing .env alone appears to do nothing.
+
+These are local sandbox credentials for a throwaway container: localhost-only,
+synthetic data, destroyed by `make reset`. Production credentials belong in a
+secret manager, injected at runtime -- src/config.py already reads every value
+from the environment, so that needs no code change.
