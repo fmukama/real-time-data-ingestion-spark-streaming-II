@@ -19,7 +19,7 @@ Nothing else. No local Python, no local Spark, no local PostgreSQL ; everything 
 ## 2. First-time setup
 
 ```bash
-git clone <repository-url>
+git clone <repository-url> "Real-Time-Data-Ingestion-II"
 ```
 
 ```bash
